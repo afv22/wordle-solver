@@ -1,4 +1,5 @@
 import re
+import sys
 import math
 from src import WordleSolver, Color
 
@@ -30,7 +31,7 @@ def main(corpus):
             return
 
         solver.processResult(guess, list(map(Color, map(int, result))))
-        
+
         new_uncertainty = math.log(len(solver.corpus), 2)
         print("Actual Information: {:.2f}".format(uncertainty - new_uncertainty))
         uncertainty = new_uncertainty
@@ -39,7 +40,11 @@ def main(corpus):
 
 
 if __name__ == "__main__":
-    with open("wordlist.txt", "r") as file:
+    args = sys.argv[1:]
+    if len(args) != 1:
+        raise ValueError("Missing wordlist!")
+
+    with open(args[0], "r") as file:
         corpus = file.read().split("\n")
 
     main(corpus)

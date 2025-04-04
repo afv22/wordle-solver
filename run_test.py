@@ -6,9 +6,14 @@ from src import Tester
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    iterations = 100 if not len(args) else int(args[0])
+    if len(args) > 1:
+        iterations = int(args[0])
+        wordlist_file = args[1]
+    else:
+        iterations = 10
+        wordlist_file = args[0]
 
-    with open("wordlist.txt", "r") as file:
+    with open(wordlist_file, "r") as file:
         corpus = file.read().split("\n")
 
     results = Counter()
