@@ -12,6 +12,7 @@ class WordleSolver:
     CACHE_FILE = "entropy_cache.pkl"
 
     def __init__(self, corpus, criteria=Criteria.ENTROPY):
+        self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
         self.pattern_cache = {}  # Cache for word-pattern compatibility
@@ -35,12 +36,48 @@ class WordleSolver:
         except Exception:
             pass
 
+    def _last_blank_index(self) -> int:
+        for i in range(5):
+            chars_at_position_i = [word[i] for word in self.corpus]
+            unique_chars = set(chars_at_position_i)
+            same_at_all_other_positions = True
+            for j in range(5):
+                if j != i:
+                    chars_at_position_j = [word[j] for word in self.corpus]
+                    if len(set(chars_at_position_j)) > 1:
+                        same_at_all_other_positions = False
+                        break
+
+            if same_at_all_other_positions and len(unique_chars) == len(self.corpus):
+                return i
+
+        return -1
+
     def generateGuess(self) -> tuple[str, int]:
         """Generate the next optimal guess based on the selected criteria."""
         if self.selection_criteria == Criteria.RANDOM:
             return random.choice(self.corpus)
 
         if self.selection_criteria == Criteria.ENTROPY:
+            n = self.remainingWords()
+            if n <= 2:
+                return (self.corpus[0], 1.)
+
+            # If in the endgame and there is only one differing letter in all remaining
+            # possibilities, find a word that uses as many of those letters as possible
+            if n <= 5:
+                i = self._last_blank_index()
+                if i >= 0:
+                    letters = [word[i] for word in self.corpus]
+                    max_letters = 0
+                    optimal_word = None
+                    for word in self.full_corpus:
+                        n = sum(1 for c in letters if c in word)
+                        if n > max_letters:
+                            max_letters = n
+                            optimal_word = word
+                    return (optimal_word, self._calculate_entropy(word))
+
             # Use precomputed values for the initial guess (when corpus is full size)
             corpus_key = frozenset(self.corpus)
             if corpus_key in self.entropy_cache:
