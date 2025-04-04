@@ -1,18 +1,27 @@
 from collections import Counter
 import random
+from enum import Enum
+
+from .colors import Color
+
+
+class Criteria(Enum):
+    RANDOM = 0
 
 
 class WordleSolver:
-    def __init__(self, corpus):
+    def __init__(self, corpus, criteria=Criteria.RANDOM):
         self.corpus = corpus
-        print("0: Does not appear")
-        print("1: Correct position")
-        print("2: Incorrect position")
+        self.selection_criteria = criteria
 
-    def generateGuess(self):
+    def __generateRandomGuess(self) -> str:
         return random.choice(self.corpus)
 
-    def processResult(self, guess, state):
+    def generateGuess(self) -> str:
+        if self.selection_criteria == Criteria.RANDOM:
+            return self.__generateRandomGuess()
+
+    def processResult(self, guess, state) -> None:
         filtered_corpus = []
 
         for word in self.corpus:
@@ -24,7 +33,7 @@ class WordleSolver:
 
             # First pass: handle exact matches (state 1) and non-matches (state 0)
             for i, (guess_letter, status) in enumerate(zip(guess, state)):
-                if status == 1:
+                if status == Color.GREEN:
                     # Letter must be in this position
                     if word[i] != guess_letter:
                         is_compatible = False
@@ -37,7 +46,7 @@ class WordleSolver:
 
             # Second pass: handle letters that exist but in wrong position (state 2)
             for i, (guess_letter, status) in enumerate(zip(guess, state)):
-                if status == 2:
+                if status == Color.YELLOW:
                     if word[i] == guess_letter:
                         is_compatible = False
                         break
@@ -45,13 +54,14 @@ class WordleSolver:
                         is_compatible = False
                         break
                     letter_counts[guess_letter] -= 1
-                elif status == 0:
+                elif status == Color.GREY:
                     # Letter shouldn't exist in the word (or all instances are accounted for)
                     # Count how many times this letter appears with status 1 or 2
                     accounted_for = sum(
                         1
                         for j, s in enumerate(state)
-                        if (s == 1 or s == 2) and guess[j] == guess_letter
+                        if (s == Color.GREEN or s == Color.YELLOW)
+                        and guess[j] == guess_letter
                     )
 
                     # If we have more of this letter in the word than accounted for, it's incompatible
@@ -68,5 +78,5 @@ class WordleSolver:
 
         self.corpus = filtered_corpus
 
-    def remainingWords(self):
+    def remainingWords(self) -> int:
         return len(self.corpus)
