@@ -1,6 +1,7 @@
 from collections import Counter
-from .colors import Color
-from .WordleSolver import WordleSolver
+
+from src import Color
+from src import WordleSolver
 
 
 class Tester:

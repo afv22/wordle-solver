@@ -1,7 +1,8 @@
-from src.WordleSolver import WordleSolver
 import re
-from collections import Counter
-from src.colors import Color
+
+from src import WordleSolver
+from src import Color
+
 
 
 def main(corpus):
@@ -34,5 +35,5 @@ def main(corpus):
 if __name__ == "__main__":
     with open("wordlist.txt", "r") as file:
         corpus = file.read().split("\n")
-    
+
     main(corpus)

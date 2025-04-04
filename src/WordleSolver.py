@@ -2,7 +2,7 @@ from collections import Counter
 import random
 from enum import Enum
 
-from .colors import Color
+from src import Color
 
 
 class Criteria(Enum):
