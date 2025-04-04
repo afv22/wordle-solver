@@ -1,8 +1,8 @@
-from src import Tester
-
 import sys
 import random
 from collections import Counter
+
+from src import Tester
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     results = Counter()
     for _ in range(iterations):
         answer = random.choice(corpus)
-        num_guesses = Tester.Tester(answer, corpus).run()
+        num_guesses = Tester(answer, corpus).run()
         results[num_guesses] += 1
 
     for i in range(7):

@@ -1,4 +1,4 @@
-from WordleSolver import *
-from Tester import *
+from .wordle_solver import *
+from .tester import *
 
-from colors import *
+from .colors import *

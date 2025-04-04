@@ -1,7 +1,6 @@
 from collections import Counter
 
-from src import Color
-from src import WordleSolver
+from src import Color, WordleSolver
 
 
 class Tester:
@@ -12,8 +11,8 @@ class Tester:
 
     def run(self) -> int:
         for i in range(1, 7):
-            guess = self.solver.generateGuess()
-            pattern = self.generatePatten(guess)
+            guess, _ = self.solver.generateGuess()
+            pattern = self.generatePattern(guess)
             if self.verbose:
                 print("{}: {}".format(guess, pattern))
 
@@ -23,7 +22,7 @@ class Tester:
             self.solver.processResult(guess, pattern)
         return 0
 
-    def generatePatten(self, guess) -> list[Color]:
+    def generatePattern(self, guess) -> list[Color]:
         pattern = []
         cntr = Counter(self.answer)
         for i, c in enumerate(guess):
