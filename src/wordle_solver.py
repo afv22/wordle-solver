@@ -11,7 +11,7 @@ class WordleSolver(Cache):
     CACHE_FILE = "entropy_cache.pkl"
     CACHE_LIMIT = 1000
 
-    def __init__(self, corpus, criteria=Criteria.ENTROPY):
+    def __init__(self, corpus, criteria=Criteria.RANDOM):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
@@ -39,7 +39,7 @@ class WordleSolver(Cache):
     def generateGuess(self) -> tuple[str, int]:
         """Generate the next optimal guess based on the selected criteria"""
         if self.selection_criteria == Criteria.RANDOM:
-            return random.choice(self.corpus)
+            return (random.choice(self.corpus), 0)
 
         if self.selection_criteria == Criteria.ENTROPY:
             n = self.remainingWords()
