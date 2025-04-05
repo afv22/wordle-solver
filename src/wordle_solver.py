@@ -11,7 +11,7 @@ class WordleSolver(Cache):
     CACHE_FILE = "entropy_cache.pkl"
     CACHE_LIMIT = 1000
 
-    def __init__(self, corpus, criteria=Criteria.RANDOM):
+    def __init__(self, corpus: list[str], criteria: Criteria):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria

@@ -1,11 +1,11 @@
 import re
 import sys
 import math
-from src import WordleSolver, Color
+from src import WordleSolver, Color, Criteria
 
 
 def main(corpus):
-    solver = WordleSolver(corpus)
+    solver = WordleSolver(corpus, Criteria.ENTROPY)
     print("Welcome to your personal Wordle Solver!")
     uncertainty = math.log(len(corpus), 2)
 

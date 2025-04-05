@@ -1,12 +1,14 @@
 from collections import Counter
 
-from src import Color, WordleSolver
+from src import Color, Criteria, WordleSolver
 
 
 class Tester:
-    def __init__(self, answer, corpus, verbose=False):
+    def __init__(
+        self, answer: str, corpus: list[str], criteria: Criteria, verbose: bool = False
+    ):
         self.answer = answer
-        self.solver = WordleSolver(corpus)
+        self.solver = WordleSolver(corpus, criteria)
         self.verbose = verbose
 
     def run(self) -> int:
@@ -22,7 +24,7 @@ class Tester:
             self.solver.processResult(guess, pattern)
         return 0
 
-    def generatePattern(self, guess) -> list[Color]:
+    def generatePattern(self, guess: str) -> list[Color]:
         pattern = []
         cntr = Counter(self.answer)
         for i, c in enumerate(guess):
