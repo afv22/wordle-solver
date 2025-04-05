@@ -25,7 +25,7 @@ if __name__ == "__main__":
     results = Counter()
     for _ in tqdm(range(iterations), ncols=80):
         answer = random.choice(corpus)
-        num_guesses = Tester(answer, corpus, Criteria.RANDOM).run()
+        num_guesses = Tester(answer, corpus, Criteria.ENTROPY).run()
         results[num_guesses] += 1
 
     end = datetime.now()

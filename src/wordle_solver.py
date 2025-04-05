@@ -15,7 +15,7 @@ class WordleSolver(Cache):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
-        super().__init__(self.CACHE_FILE)
+        super().__init__()
 
     def _last_unspecified_index(self) -> int:
         """If all remaining words differ by only one letter, return the index"""
