@@ -1,40 +1,22 @@
 from collections import Counter, defaultdict
 import random
 import math
-import pickle
-import os
 
+from .cache import Cache
 from .colors import Color
 from .guess_criteria import Criteria
 
 
-class WordleSolver:
+class WordleSolver(Cache):
     CACHE_FILE = "entropy_cache.pkl"
+    CACHE_LIMIT = 1000
 
     def __init__(self, corpus, criteria=Criteria.ENTROPY):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
         self.pattern_cache = {}  # Cache for word-pattern compatibility
-        self.entropy_cache = {}  # Cache for word entropy values
-        self._load_entropy_cache()
-
-    def _load_entropy_cache(self) -> None:
-        """Load precomputed entropy values from file if available."""
-        if os.path.exists(self.CACHE_FILE):
-            try:
-                with open(self.CACHE_FILE, "rb") as f:
-                    self.entropy_cache = pickle.load(f)
-            except Exception:
-                pass
-
-    def _save_entropy_cache(self) -> None:
-        """Save computed entropy values to file."""
-        try:
-            with open(self.CACHE_FILE, "wb") as f:
-                pickle.dump(self.entropy_cache, f)
-        except Exception:
-            pass
+        super().__init__(self.CACHE_FILE)
 
     def _last_blank_index(self) -> int:
         for i in range(5):
@@ -61,7 +43,7 @@ class WordleSolver:
         if self.selection_criteria == Criteria.ENTROPY:
             n = self.remainingWords()
             if n <= 2:
-                return (self.corpus[0], 1.)
+                return (self.corpus[0], 1.0)
 
             # If in the endgame and there is only one differing letter in all remaining
             # possibilities, find a word that uses as many of those letters as possible
@@ -80,8 +62,8 @@ class WordleSolver:
 
             # Use precomputed values for the initial guess (when corpus is full size)
             corpus_key = frozenset(self.corpus)
-            if corpus_key in self.entropy_cache:
-                return self.entropy_cache[corpus_key]
+            if corpus_key in self.cache:
+                return self.cache[corpus_key]
 
             # Find word with maximum entropy
             max_entropy = -1
@@ -89,19 +71,19 @@ class WordleSolver:
 
             for word in self.corpus:
                 word_cache_key = (word, corpus_key)
-                if word_cache_key in self.entropy_cache:
-                    entropy = self.entropy_cache[word_cache_key]
+                if word_cache_key in self.cache:
+                    entropy = self.cache[word_cache_key]
                 else:
                     entropy = self._calculate_entropy(word)
-                    self.entropy_cache[word_cache_key] = entropy
+                    self.cache[word_cache_key] = entropy
 
                 if entropy > max_entropy:
                     max_entropy = entropy
                     optimal_word = word
 
             # Save cache periodically
-            if len(self.corpus) > 1000:  # Only save for initial calculations
-                self._save_entropy_cache()
+            if len(self.corpus) > self.CACHE_LIMIT:
+                self._save_cache()
 
             return (optimal_word, max_entropy)
 
