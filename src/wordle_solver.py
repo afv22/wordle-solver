@@ -15,10 +15,11 @@ class WordleSolver(Cache):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
-        self.pattern_cache = {}  # Cache for word-pattern compatibility
         super().__init__(self.CACHE_FILE)
 
-    def _last_blank_index(self) -> int:
+    def _last_unspecified_index(self) -> int:
+        """If all remaining words differ by only one letter, return the index"""
+        """of that unknown letter. Otherwise, return -1"""
         for i in range(5):
             chars_at_position_i = [word[i] for word in self.corpus]
             unique_chars = set(chars_at_position_i)
@@ -36,7 +37,7 @@ class WordleSolver(Cache):
         return -1
 
     def generateGuess(self) -> tuple[str, int]:
-        """Generate the next optimal guess based on the selected criteria."""
+        """Generate the next optimal guess based on the selected criteria"""
         if self.selection_criteria == Criteria.RANDOM:
             return random.choice(self.corpus)
 
@@ -48,7 +49,7 @@ class WordleSolver(Cache):
             # If in the endgame and there is only one differing letter in all remaining
             # possibilities, find a word that uses as many of those letters as possible
             if n <= 5:
-                i = self._last_blank_index()
+                i = self._last_unspecified_index()
                 if i >= 0:
                     letters = [word[i] for word in self.corpus]
                     max_letters = 0
@@ -88,6 +89,7 @@ class WordleSolver(Cache):
             return (optimal_word, max_entropy)
 
     def processResult(self, guess, pattern) -> None:
+        """Filter remaining corpus according to the given pattern"""
         self.corpus = [
             word
             for word in self.corpus
@@ -122,7 +124,7 @@ class WordleSolver(Cache):
         return True
 
     def _calculate_entropy(self, word) -> float:
-        """Calculate entropy for a word using optimized methods."""
+        """Calculate entropy for a given word"""
         corpus_size = len(self.corpus)
 
         # Use a pattern frequency dictionary instead of calculating all matches
@@ -142,7 +144,7 @@ class WordleSolver(Cache):
         return entropy
 
     def _get_pattern(self, guess, answer) -> tuple:
-        """Get the color pattern when 'guess' is played against 'answer'."""
+        """Get the color pattern when 'guess' is played against 'answer'"""
         pattern = [Color.GREY] * len(guess)
 
         # First pass: mark green matches
@@ -154,7 +156,7 @@ class WordleSolver(Cache):
 
         # Second pass: mark yellow matches
         for i, (g, p) in enumerate(zip(guess, pattern)):
-            if p == Color.GREY and letter_counts.get(g, 0) > 0:
+            if p == Color.GREY and letter_counts[g] > 0:
                 pattern[i] = Color.YELLOW
                 letter_counts[g] -= 1
 
