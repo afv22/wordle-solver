@@ -4,18 +4,23 @@ import math
 
 from .cache import Cache
 from .colors import Color
+from .pattern import Pattern
 from .guess_criteria import Criteria
 
 
-class WordleSolver(Cache):
-    CACHE_FILE = "entropy_cache.pkl"
-    CACHE_LIMIT = 1000
-
-    def __init__(self, corpus: list[str], criteria: Criteria):
+class WordleSolver:
+    def __init__(
+        self,
+        corpus: list[str],
+        criteria: Criteria,
+        entropy_cache: Cache = None,
+        pattern_cache: Cache = None,
+    ):
         self.full_corpus = corpus
         self.corpus = corpus
         self.selection_criteria = criteria
-        super().__init__()
+        self.entropy_cache = entropy_cache or Cache("entropy_cache.pkl")
+        self.pattern_cache = pattern_cache or Cache("pattern_cache.pkl", 1000)
 
     def _last_unspecified_index(self) -> int:
         """If all remaining words differ by only one letter, return the index"""
@@ -36,59 +41,65 @@ class WordleSolver(Cache):
 
         return -1
 
-    def generateGuess(self) -> tuple[str, int]:
+    def _generate_endgame_guess(self, i: int) -> tuple[str, int]:
+        letters = [word[i] for word in self.corpus]
+        max_letters = 0
+        optimal_word = None
+        for word in self.full_corpus:
+            n = sum(1 for c in letters if c in word)
+            if n > max_letters:
+                max_letters = n
+                optimal_word = word
+        return (optimal_word, self._calculate_entropy(word))
+    
+    def _generate_entropy_guess(self, corpus_key) -> tuple[str, int]:
+        max_entropy = -1
+        optimal_word = None
+
+        for word in self.corpus:
+            word_cache_key = (word, corpus_key)
+            if word_cache_key in self.entropy_cache:
+                entropy = self.entropy_cache[word_cache_key]
+            else:
+                entropy = self._calculate_entropy(word)
+                self.entropy_cache[word_cache_key] = entropy
+
+            if entropy > max_entropy:
+                max_entropy = entropy
+                optimal_word = word
+
+        return (optimal_word, max_entropy)
+
+    def generate_guess(self, guess_number) -> tuple[str, int]:
         """Generate the next optimal guess based on the selected criteria"""
         if self.selection_criteria == Criteria.RANDOM:
             return (random.choice(self.corpus), 0)
 
         if self.selection_criteria == Criteria.ENTROPY:
+            if guess_number == 1:
+                return ('tares', self._calculate_entropy('tares'))
+            
             n = self.remainingWords()
             if n <= 2:
                 return (self.corpus[0], 1.0)
 
             # If in the endgame and there is only one differing letter in all remaining
-            # possibilities, find a word that uses as many of those letters as possible
-            if n <= 5:
+            # possibilities, find a word that uses as many of those letters as possible.
+            # If it's the last guess however, there is no point in doing this.
+            if n <= 10 and guess_number != 6:
                 i = self._last_unspecified_index()
                 if i >= 0:
-                    letters = [word[i] for word in self.corpus]
-                    max_letters = 0
-                    optimal_word = None
-                    for word in self.full_corpus:
-                        n = sum(1 for c in letters if c in word)
-                        if n > max_letters:
-                            max_letters = n
-                            optimal_word = word
-                    return (optimal_word, self._calculate_entropy(word))
+                    return self._generate_endgame_guess(i)
 
             # Use precomputed values for the initial guess (when corpus is full size)
             corpus_key = frozenset(self.corpus)
-            if corpus_key in self.cache:
-                return self.cache[corpus_key]
+            if corpus_key in self.entropy_cache:
+                return self.entropy_cache[corpus_key]
 
             # Find word with maximum entropy
-            max_entropy = -1
-            optimal_word = None
+            return self._generate_entropy_guess(corpus_key)
 
-            for word in self.corpus:
-                word_cache_key = (word, corpus_key)
-                if word_cache_key in self.cache:
-                    entropy = self.cache[word_cache_key]
-                else:
-                    entropy = self._calculate_entropy(word)
-                    self.cache[word_cache_key] = entropy
-
-                if entropy > max_entropy:
-                    max_entropy = entropy
-                    optimal_word = word
-
-            # Save cache periodically
-            if len(self.corpus) > self.CACHE_LIMIT:
-                self._save_cache()
-
-            return (optimal_word, max_entropy)
-
-    def processResult(self, guess, pattern) -> None:
+    def process_result(self, guess, pattern: Pattern) -> None:
         """Filter remaining corpus according to the given pattern"""
         self.corpus = [
             word
@@ -96,7 +107,7 @@ class WordleSolver(Cache):
             if self._is_word_compatible(word, guess, pattern)
         ]
 
-    def _is_word_compatible(self, word, guess, pattern) -> bool:
+    def _is_word_compatible(self, word, guess, pattern: Pattern) -> bool:
         letter_counts = Counter(word)
 
         # First pass: check green letters (exact matches)
@@ -145,6 +156,10 @@ class WordleSolver(Cache):
 
     def _get_pattern(self, guess, answer) -> tuple:
         """Get the color pattern when 'guess' is played against 'answer'"""
+        key = frozenset([guess, answer])
+        if key in self.pattern_cache:
+            return self.pattern_cache[key]
+
         pattern = [Color.GREY] * len(guess)
 
         # First pass: mark green matches
@@ -160,7 +175,9 @@ class WordleSolver(Cache):
                 pattern[i] = Color.YELLOW
                 letter_counts[g] -= 1
 
-        return tuple(pattern)
+        pattern = tuple(pattern)
+        self.pattern_cache[key] = pattern
+        return pattern
 
     def remainingWords(self) -> int:
         return len(self.corpus)

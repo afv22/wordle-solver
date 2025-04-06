@@ -1,39 +1,28 @@
 from collections import Counter
 
-from src import Color, Criteria, WordleSolver
+from src import Cache, Criteria, WordleSolver, Wordle
 
 
 class Tester:
     def __init__(
-        self, answer: str, corpus: list[str], criteria: Criteria, verbose: bool = False
+        self,
+        answer: str,
+        corpus: list[str],
+        criteria: Criteria,
+        verbose: bool = False,
+        entropy_cache: Cache = None,
+        pattern_cache: Cache = None,
     ):
-        self.answer = answer
-        self.solver = WordleSolver(corpus, criteria)
+        self.wordle = Wordle(answer)
+        self.solver = WordleSolver(corpus, criteria, entropy_cache, pattern_cache)
         self.verbose = verbose
 
     def run(self) -> int:
-        for i in range(1, 7):
-            guess, _ = self.solver.generateGuess()
-            pattern = self.generatePattern(guess)
+        while self.wordle.is_active():
+            guess, _ = self.solver.generate_guess(self.wordle.guess_number)
+            pattern = self.wordle.process_guess(guess)
+            self.solver.process_result(guess, pattern)
             if self.verbose:
                 print("{}: {}".format(guess, pattern))
 
-            if all(map(lambda x: x == Color.GREEN, pattern)):
-                return i
-
-            self.solver.processResult(guess, pattern)
-        return 0
-
-    def generatePattern(self, guess: str) -> list[Color]:
-        pattern = []
-        cntr = Counter(self.answer)
-        for i, c in enumerate(guess):
-            if cntr[c] == 0:
-                pattern.append(Color.GREY)
-            elif self.answer[i] == c:
-                pattern.append(Color.GREEN)
-                cntr[c] -= 1
-            else:
-                pattern.append(Color.YELLOW)
-                cntr[c] -= 1
-        return pattern
+        return self.wordle.guess_number if self.wordle.has_won else 0

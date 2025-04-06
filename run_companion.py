@@ -18,7 +18,7 @@ def main(corpus):
 
         print("Uncertainty: {:.2f}".format(uncertainty))
 
-        guess, expected_entropy = solver.generateGuess()
+        guess, expected_entropy = solver.generate_guess(i)
         print("Guess: {}".format(guess))
         print("Expected Information: {:.2f}".format(expected_entropy))
 
@@ -30,7 +30,7 @@ def main(corpus):
             print("You won in {} guess{}!".format(i, "" if i == 1 else "es"))
             return
 
-        solver.processResult(guess, list(map(Color, map(int, result))))
+        solver.process_result(guess, list(map(Color, map(int, result))))
 
         new_uncertainty = math.log(len(solver.corpus), 2)
         print("Actual Information: {:.2f}".format(uncertainty - new_uncertainty))
