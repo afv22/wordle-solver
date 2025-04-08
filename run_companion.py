@@ -1,39 +1,39 @@
 import re
 import sys
 import math
-from src import WordleSolver, Color, Criteria
+
+from src import Color, Criteria, Pattern, WordleSolver, load_wordlist
 
 
 def main(corpus):
-    solver = WordleSolver(corpus, Criteria.ENTROPY)
+    solver = WordleSolver(corpus, Criteria.EXPECTED_MOVES)
     print("Welcome to your personal Wordle Solver!")
     uncertainty = math.log(len(corpus), 2)
 
-    for i in range(1, 7):
-        remaining = solver.remainingWords()
-        print("\nRemaining Words: {}".format(remaining))
-        if remaining == 0:
-            print("Uh oh, I don't know this word!")
-            return
-
+    for i in range(6):
+        print("\nRemaining Words: {}".format(solver.remainingWords()))
         print("Uncertainty: {:.2f}".format(uncertainty))
 
-        guess, expected_entropy = solver.generate_guess(i)
+        guess, expected_information = solver.generate_guess(i)
         print("Guess: {}".format(guess))
-        print("Expected Information: {:.2f}".format(expected_entropy))
+        print("Expected Information: {:.2f} bits".format(expected_information))
 
         result = input("Result: ")
         while not re.search("^([0-2]{5})$", result):
             result = input("Try again: ")
 
         if result == "11111":
-            print("You won in {} guess{}!".format(i, "" if i == 1 else "es"))
+            print("You won in {} guess{}!".format(i + 1, "" if i == 0 else "es"))
             return
 
-        solver.process_result(guess, list(map(Color, map(int, result))))
+        solver.process_result(guess, Pattern(result))
+
+        if solver.remainingWords() == 0:
+            print("Uh oh, I don't know this word!")
+            return
 
         new_uncertainty = math.log(len(solver.corpus), 2)
-        print("Actual Information: {:.2f}".format(uncertainty - new_uncertainty))
+        print("Actual Information: {:.2f} bits".format(uncertainty - new_uncertainty))
         uncertainty = new_uncertainty
 
     print("Game over. Better luck next time!")
@@ -41,10 +41,10 @@ def main(corpus):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    if len(args) != 1:
-        raise ValueError("Missing wordlist!")
+    if len(args) == 1:
+        filepath = args[0]
+    else:
+        filepath = "wordlists/dracos_wordlist.txt"
 
-    with open(args[0], "r") as file:
-        corpus = file.read().split("\n")
-
+    corpus = load_wordlist(filepath)
     main(corpus)
