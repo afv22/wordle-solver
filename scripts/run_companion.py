@@ -1,14 +1,15 @@
 import re
 import sys
-import math
 
-from src import Color, Criteria, Pattern, WordleSolver, load_wordlist
+from src import Pattern, WordleSolver, load_wordlist
+from .utils import get_strategy
 
 
-def main(corpus):
-    solver = WordleSolver(corpus, Criteria.EXPECTED_MOVES)
+def main(filepath="wordlists/dracos_wordlist.txt"):
     print("Welcome to your personal Wordle Solver!")
-    uncertainty = math.log(len(corpus), 2)
+
+    solver = WordleSolver(load_wordlist(filepath), get_strategy())
+    uncertainty = solver.get_uncertainty()
 
     for i in range(6):
         print("\nRemaining Words: {}".format(solver.remainingWords()))
@@ -32,7 +33,7 @@ def main(corpus):
             print("Uh oh, I don't know this word!")
             return
 
-        new_uncertainty = math.log(len(solver.corpus), 2)
+        new_uncertainty = solver.get_uncertainty()
         print("Actual Information: {:.2f} bits".format(uncertainty - new_uncertainty))
         uncertainty = new_uncertainty
 
@@ -46,5 +47,4 @@ if __name__ == "__main__":
     else:
         filepath = "wordlists/dracos_wordlist.txt"
 
-    corpus = load_wordlist(filepath)
-    main(corpus)
+    main(filepath)

@@ -3,8 +3,10 @@ import pickle
 
 
 class Cache(dict):
+    DATA_DIRECTORY = "data/"
+
     def __init__(self, cache_file: str):
-        self.cache_file = cache_file
+        self.cache_file = self.DATA_DIRECTORY + cache_file
         self._load_cache()
 
     def _load_cache(self) -> None:

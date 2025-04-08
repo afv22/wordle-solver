@@ -1,8 +1,6 @@
 import math
 import random
 
-from functools import cache
-
 from collections import Counter, defaultdict
 
 from .cache import Cache
@@ -103,7 +101,7 @@ class WordleSolver:
 
         if self.selection_criteria == Criteria.EXPECTED_MOVES:
             if guesses_made == 0:
-                # Calculate optimal guess for this strategy
+                # TODO: Calculate optimal guess for this strategy
                 return ("tares", self._calculate_entropy("tares"))
             return self._lowest_expected_number_of_moves(self.corpus)
 
@@ -224,3 +222,6 @@ class WordleSolver:
         value = (optimal_guess, optimal_expected_guesses + 1)
         self.expected_value_cache[key] = value
         return value
+
+    def get_uncertainty(self):
+        return math.log(len(self.corpus), 2)
