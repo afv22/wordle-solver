@@ -75,23 +75,23 @@ class WordleSolver:
         """Generate the next optimal guess based on the selected criteria"""
         if self.selection_criteria == Criteria.RANDOM:
             return (random.choice(self.corpus), 0)
-
-        if self.selection_criteria == Criteria.ENTROPY:
-            if guesses_made == 0:
+        
+        if guesses_made == 0:
                 return ("tares", self._calculate_entropy("tares"))
 
-            n = self.remainingWords()
-            if n <= 2:
-                return (self.corpus[0], 1.0)
+        n = self.remainingWords()
+        if n <= 2:
+            return (self.corpus[0], 1.0)
 
-            # If in the endgame and there is only one differing letter in all remaining
-            # possibilities, find a word that uses as many of those letters as possible.
-            # If it's the last guess however, there is no point in doing this.
-            if n <= 10 and guesses_made < 5:
-                i = self._last_unspecified_index()
-                if i >= 0:
-                    return self._generate_endgame_guess(i)
+        # If in the endgame and there is only one differing letter in all remaining
+        # possibilities, find a word that uses as many of those letters as possible.
+        # If it's the last guess however, there is no point in doing this.
+        if n <= 10 and guesses_made < 5:
+            i = self._last_unspecified_index()
+            if i >= 0:
+                return self._generate_endgame_guess(i)
 
+        if self.selection_criteria == Criteria.ENTROPY:
             corpus_key = frozenset(self.corpus)
             if corpus_key in self.entropy_cache:
                 return self.entropy_cache[corpus_key]
@@ -100,9 +100,6 @@ class WordleSolver:
             return self._generate_entropy_guess(corpus_key)
 
         if self.selection_criteria == Criteria.EXPECTED_MOVES:
-            if guesses_made == 0:
-                # TODO: Calculate optimal guess for this strategy
-                return ("tares", self._calculate_entropy("tares"))
             return self._lowest_expected_number_of_moves(self.corpus)
 
     def process_result(self, guess, pattern: Pattern) -> None:
@@ -192,7 +189,7 @@ class WordleSolver:
         key = frozenset(words)
         if key in self.expected_value_cache:
             return self.expected_value_cache[key]
-            
+
         n = len(words)
 
         if n == 1:

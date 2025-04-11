@@ -5,36 +5,15 @@ from collections import Counter
 from datetime import datetime
 from tqdm import tqdm
 
-from src import Cache, Criteria, Wordle, WordleSolver, load_wordlist
-
-def get_strategy():
-    print("Select your strategy:")
-    print("1) Random")
-    print("2) Entropy")
-    print("3) Expected Value")
-    
-    criteria_choice = input("> ")
-    while criteria_choice not in ["1", "2", "3"]:
-        print("Try again.")
-        criteria_choice = input("> ")
-
-    if criteria_choice == "1":
-        criteria = Criteria.RANDOM
-    elif criteria_choice == "2":
-        criteria = Criteria.ENTROPY
-    elif criteria_choice == "3":
-        criteria = Criteria.EXPECTED_MOVES
-    else:
-        raise ValueError("Invalid Criteria Selection")
-
-    return criteria
+from src import Cache, Wordle, WordleSolver, load_wordlist
+from .utils import get_strategy
 
 
-def main(iterations=10, filepath='wordlists/wordlist.txt'):
+def main(iterations=10, filepath="wordlists/wordlist.txt"):
     strategy = get_strategy()
 
     print("Loading wordlist...")
-    corpus = load_wordlist(filepath)
+    corpus = load_wordlist(filepath)['word'].to_list()
 
     print("Running benchmarker...")
     start = datetime.now()
@@ -50,7 +29,7 @@ def main(iterations=10, filepath='wordlists/wordlist.txt'):
             guess, _ = solver.generate_guess(wordle.guesses_made)
             pattern = wordle.process_guess(guess)
             solver.process_result(guess, pattern)
-        num_guesses = wordle.guesses_made if wordle.has_won else 0
+        num_guesses = len(wordle.guesses) if wordle.has_won else 0
         results[num_guesses] += 1
 
     pattern_cache._save_cache()

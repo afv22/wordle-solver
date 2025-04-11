@@ -5,20 +5,20 @@ from src import Pattern, WordleSolver, load_wordlist
 from .utils import get_strategy
 
 
-def main(filepath="wordlists/dracos_wordlist.txt"):
+def main(filepath="wordlists/dracos_wordlist.csv"):
     print("Welcome to your personal Wordle Solver!")
 
-    solver = WordleSolver(load_wordlist(filepath), get_strategy())
+    solver = WordleSolver(load_wordlist(filepath)["word"].to_list(), get_strategy())
     uncertainty = solver.get_uncertainty()
 
     for i in range(6):
         print("\nRemaining Words: {}".format(solver.remainingWords()))
         print("Uncertainty: {:.2f}".format(uncertainty))
 
-        guess, expected_information = solver.generate_guess(i)
-        print("Guess: {}".format(guess))
+        recommended_guess, expected_information = solver.generate_guess(i)
+        print("Recommended Guess: {}".format(recommended_guess))
         print("Expected Information: {:.2f} bits".format(expected_information))
-
+        guess = input('Actual Guess: ')
         result = input("Result: ")
         while not re.search("^([0-2]{5})$", result):
             result = input("Try again: ")

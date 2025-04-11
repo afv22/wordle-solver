@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from enum import Enum
 
 
@@ -15,10 +17,7 @@ class Criteria(Enum):
     EXPECTED_MOVES = 2
 
 
-def load_wordlist(filepath: str) -> list[str]:
+def load_wordlist(filepath: str) -> pd.DataFrame:
     if not os.path.exists(filepath):
         raise ValueError("File does not exist!")
-
-    with open(filepath, "r") as file:
-        corpus = file.read()
-    return corpus.split("\n")
+    return pd.read_csv(filepath)

@@ -1,32 +1,24 @@
-from scripts.run_wordle import main as run_wordle
-from scripts.run_companion import main as run_companion
-from scripts.run_test import main as run_test
+from scripts import run_companion, run_test, run_wordle, get_input
 
 
 def main():
     print("Welcome to Wordle!")
-    print("Would you like to:")
+    print("Select an experience:")
 
     options = {
         "1": "Play Wordle",
         "2": "Have a Wordle Companion",
         "3": "Run Benchmarker",
     }
+    gametype = get_input(options)
 
-    for key in options:
-        print(f"{key}: {options[key]}")
-
-    gametype = input("> ")
-    while gametype not in options.keys():
-        print("Oops! Try again.")
-        gametype = input("> ")
-
+    fp = "wordlists/wordlist.csv"
     if gametype == "1":
-        run_wordle()
+        run_wordle(filepath=fp)
     elif gametype == "2":
-        run_companion()
+        run_companion(filepath=fp)
     elif gametype == "3":
-        run_test()
+        run_test(filepath=fp)
 
 
 main()
