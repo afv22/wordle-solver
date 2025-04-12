@@ -1,22 +1,11 @@
-from src import Wordle, load_wordlist
+from src import Wordle
 
 
-def main(filepath="wordlists/wordlist.csv"):
-    corpus = load_wordlist(filepath)
-    answer = corpus["word"].sample(n=1).iloc[0]
-    wordle = Wordle(answer)
-
-    while wordle.is_active():
-        guess = input("Guess: ")
-        pattern = wordle.process_guess(guess)
-
-        print(pattern)
-        if wordle.is_won():
-            print("You win!")
-            break
-    else:
-        print("Game over...")
-        print("The word was: {}".format(wordle.answer))
+def main(filepath="wordlists/wordlist.csv", generate_answer=False):
+    wordle = Wordle(filepath)
+    wordle.start_game(
+        wordle.wordlist.sample(n=1).values[0] if generate_answer else None
+    )
 
 
 if __name__ == "__main__":

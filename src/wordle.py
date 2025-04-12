@@ -1,42 +1,67 @@
-from collections import Counter
-from typing import Optional
-
-from .utils import Color
-from .pattern import Pattern
+from .companion import Companion
+from .pattern import pattern_utils
+from .utils import Criteria, load_wordlist
 
 
 class Wordle:
-    def __init__(self, answer: Optional[str] = None):
-        self.answer = answer
-        self.has_won = False
-        self.guesses = []
+    def __init__(
+        self,
+        wordlist_path: str = "wordlists/wordlist.csv",
+        criteria: Criteria = Criteria.EXPECTED_MOVES,
+    ):
+        self.wordlist = load_wordlist(wordlist_path)["word"]
+        self.companion = Companion(self.wordlist.to_list(), criteria)
 
-    def process_guess(self, guess: str) -> Pattern:
-        if not self.is_active():
-            raise ValueError("Game is complete.")
+    def start_game(self, answer=None) -> None:
+        self.companion.reset()
+        guesses = []
+        for round in range(1, 7):
+            recommended_guess = self.companion.generate_guess(round)
+            print(f"Recommended: {recommended_guess}")
+            actual_guess = input("Guess: ")
 
-        pattern = [Color.GREY] * len(guess)
-        
-        # First pass: mark green matches
-        letter_counts = Counter(self.answer)
-        for i, (g, a) in enumerate(zip(guess, self.answer)):
-            if g == a:
-                pattern[i] = Color.GREEN
-                letter_counts[g] -= 1
+            if answer:
+                result_pattern = pattern_utils.calculate_from_guess(
+                    actual_guess, answer
+                )
+            else:
+                result_input = input("Result: ")
+                result_pattern = pattern_utils.parse_values(result_input)
 
-        # Second pass: mark yellow matches
-        for i, (g, p) in enumerate(zip(guess, pattern)):
-            if p == Color.GREY and letter_counts[g] > 0:
-                pattern[i] = Color.YELLOW
-                letter_counts[g] -= 1
+            self.companion.process_result(actual_guess, result_pattern)
+            print(f"{result_pattern} {self.companion.remaining_words()}")
 
-        pattern = Pattern(pattern)
-        self.guesses.append({"word": guess, "pattern": pattern})
-        self.has_won = pattern.is_winning()
-        return pattern
+            guesses.append({"word": actual_guess, "pattern": result_pattern})
+            if result_pattern.is_correct_guess():
+                print("You win!")
+                return
 
-    def is_active(self):
-        return len(self.guesses) < 6 and not self.is_won()
+        print("Game over!")
 
-    def is_won(self):
-        return len(self.guesses) > 0 and self.guesses[-1]['pattern'].is_winning()
+    def start_test(self, answer=None, verbose=False) -> int:
+        self.companion.reset()
+
+        if not answer:
+            answer = self.wordlist.sample(n=1).values[0]
+
+        if verbose:
+            print(f"Answer: {answer}")
+
+        guesses = []
+        for round in range(1, 7):
+            guess = self.companion.generate_guess(round)
+            result_pattern = pattern_utils.calculate_from_guess(guess, answer)
+            self.companion.process_result(guess, result_pattern)
+            if verbose:
+                s = "{word}: {pattern} {remaining} words remaining".format(
+                    word=guess,
+                    pattern=result_pattern,
+                    remaining=self.companion.remaining_words(),
+                )
+                print(s)
+
+            guesses.append({"word": guess, "pattern": result_pattern})
+            if result_pattern.is_correct_guess():
+                return round
+
+        return -1

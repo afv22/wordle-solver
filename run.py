@@ -1,4 +1,4 @@
-from scripts import run_companion, run_test, run_wordle, get_input
+from scripts import run_test, run_wordle, get_input
 
 
 def main():
@@ -7,18 +7,19 @@ def main():
 
     options = {
         "1": "Play Wordle",
-        "2": "Have a Wordle Companion",
+        "2": "Have a Companion",
         "3": "Run Benchmarker",
     }
     gametype = get_input(options)
 
     fp = "wordlists/wordlist.csv"
     if gametype == "1":
+        run_wordle(filepath=fp, generate_answer=True)
+    if gametype == "2":
         run_wordle(filepath=fp)
-    elif gametype == "2":
-        run_companion(filepath=fp)
     elif gametype == "3":
         run_test(filepath=fp)
 
 
-main()
+if __name__ == "__main__":
+    main()

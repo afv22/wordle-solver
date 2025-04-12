@@ -1,5 +1,5 @@
 from .wordle import *
-from .wordle_solver import *
+from .companion import *
 
 from .cache import *
 from .pattern import *

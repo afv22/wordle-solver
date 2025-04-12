@@ -1,39 +1,27 @@
-import random
 import sys
 
 from collections import Counter
 from datetime import datetime
 from tqdm import tqdm
 
-from src import Cache, Wordle, WordleSolver, load_wordlist
+from src import Wordle
 from .utils import get_strategy
 
 
-def main(iterations=10, filepath="wordlists/wordlist.txt"):
+def main(filepath="wordlists/wordlist.txt"):
     strategy = get_strategy()
-
-    print("Loading wordlist...")
-    corpus = load_wordlist(filepath)['word'].to_list()
+    print("Enter number of iterations:")
+    iterations = int(input("> "))
 
     print("Running benchmarker...")
     start = datetime.now()
 
+    wordle = Wordle(filepath, strategy)
     results = Counter()
-    entropy_cache = Cache("entropy_cache.pkl")
-    pattern_cache = Cache("pattern_cache.pkl")
     for _ in tqdm(range(iterations), ncols=80):
-        answer = random.choice(corpus)
-        wordle = Wordle(answer)
-        solver = WordleSolver(corpus, strategy, entropy_cache, pattern_cache)
-        while wordle.is_active():
-            guess, _ = solver.generate_guess(wordle.guesses_made)
-            pattern = wordle.process_guess(guess)
-            solver.process_result(guess, pattern)
-        num_guesses = len(wordle.guesses) if wordle.has_won else 0
-        results[num_guesses] += 1
+        result = wordle.start_test()
+        results[result] += 1
 
-    pattern_cache._save_cache()
-    entropy_cache._save_cache()
     end = datetime.now()
     print("Finished in {:.2f}s\n".format((end - start).seconds))
 
