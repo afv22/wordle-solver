@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 
 from .cache import Cache
 from .pattern import Pattern, pattern_utils
-from .utils import Color, Criteria
+from .utils import Color, Criteria, load_wordlist
 
 
 class Companion:
@@ -13,12 +13,15 @@ class Companion:
         self,
         corpus: list[str],
         criteria: Criteria,
-        entropy_cache: Cache = None,
     ):
         self.full_corpus = corpus
         self.possible_guesses = []
         self.selection_criteria = criteria
-        self.entropy_cache = entropy_cache or Cache("entropy_cache.pkl")
+        self.entropy_cache = Cache("entropy_cache.pkl")
+        freqs = load_wordlist("wordlists/five_letter_freq.csv")
+        self.word_frequencies = {}
+        for index, (word, count, normalized_count) in freqs.iterrows():
+            self.word_frequencies[word] = normalized_count
 
     def _sort_possible_guesses(self) -> None:
         new_possible_guesses = []
@@ -42,30 +45,22 @@ class Companion:
         """If all remaining words differ by only one letter, return the index"""
         """of that unknown letter. Otherwise, return -1"""
         words = [word for _, word in self.possible_guesses]
+        index = None
         for i in range(5):
-            chars_at_position_i = [word[i] for word in words]
-            unique_chars = set(chars_at_position_i)
-            same_at_all_other_positions = True
-            for j in range(5):
-                if j != i:
-                    chars_at_position_j = [word[j] for word in words]
-                    if len(set(chars_at_position_j)) > 1:
-                        same_at_all_other_positions = False
-                        break
-
-            if same_at_all_other_positions and len(unique_chars) == len(words):
-                return i
-
-        return -1
+            if len(set([word[i] for word in words])) > 1:
+                if index != None:
+                    return -1
+                index = i
+        return index
 
     def _generate_endgame_guess(self, i: int) -> tuple[str, int]:
         letters = [word[i] for _, word in self.possible_guesses]
-        max_letters = 0
+        max_represented_letters = 0
         optimal_word = None
         for word in self.full_corpus:
-            n = sum(1 for c in letters if c in word)
-            if n > max_letters:
-                max_letters = n
+            represented_letters = sum(1 for c in letters if c in word)
+            if represented_letters > max_represented_letters:
+                max_represented_letters = represented_letters
                 optimal_word = word
         return optimal_word
 
@@ -75,6 +70,7 @@ class Companion:
             raise ValueError("No remaining possible words")
 
         if round == 1:
+            # TODO: Generate initial state for each strategy
             return "tares"
 
         # If in the endgame and there is only one differing letter in
@@ -149,7 +145,7 @@ class Companion:
 
     def _expected_moves(self, guess: str, words: list[str]):
         if len(words) == 1:
-            return 1
+            return self.word_frequencies.get([words[0]], 0)
 
         pattern_counts = defaultdict(list)
         for answer in words:
@@ -171,4 +167,5 @@ class Companion:
         return guess_expected_moves
 
     def get_uncertainty(self):
+        """Calculate the remaining uncertainty in the possible words, in bits"""
         return math.log(len(self.possible_guesses), 2)
